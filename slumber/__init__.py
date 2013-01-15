@@ -140,12 +140,17 @@ class Resource(ResourceAttributesMixin, object):
         else:
             return  # @@@ We should probably do some sort of error here? (Is this even possible?)
 
-    def post(self, data=None, files=None, **kwargs):
+    def post(self, data=None, files=None, follow_location=True, **kwargs):
         s = self._store["serializer"]
 
         resp = self._request("POST", data=data, files=files, params=kwargs)
         if 200 <= resp.status_code <= 299:
-            return self._try_to_serialize_response(resp)
+            if follow_location and resp.status_code == 201:
+                # @@@ Hacky, see description in __call__
+                resource_obj = self(url_override=resp.headers["location"])
+                return resource_obj.get(params=kwargs)
+            else:
+                return s.loads(resp.content)
         else:
             # @@@ Need to be Some sort of Error Here or Something
             return
