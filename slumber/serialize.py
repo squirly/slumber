@@ -28,12 +28,18 @@ class BaseSerializer(object):
         if self.content_types is None:
             raise NotImplementedError()
         return self.content_types[0]
+      
+    def get_accepts_type(self):
+        return self.get_content_type()
 
     def loads(self, data):
         raise NotImplementedError()
 
     def dumps(self, data):
         raise NotImplementedError()
+      
+    def dump_files(self, files):
+        return files
 
 
 class JsonSerializer(BaseSerializer):
@@ -107,6 +113,14 @@ class Serializer(object):
         s = self.get_serializer(format)
         return s.dumps(data)
 
+    def dump_files(self, files, format=None):
+        s = self.get_serializer(format)
+        return s.dump_files(files)
+
     def get_content_type(self, format=None):
         s = self.get_serializer(format)
         return s.get_content_type()
+
+    def get_accepts_type(self, format=None):
+        s = self.get_serializer(format)
+        return s.get_accepts_type()

@@ -140,8 +140,11 @@ class Resource(ResourceAttributesMixin, object):
         else:
             return  # @@@ We should probably do some sort of error here? (Is this even possible?)
 
+
     def post(self, data=None, files=None, follow_location=True, **kwargs):
         s = self._store["serializer"]
+        data = s.dumps(data)
+        files = s.dump_files(files)
 
         resp = self._request("POST", data=data, files=files, params=kwargs)
         if 200 <= resp.status_code <= 299:
@@ -169,7 +172,10 @@ class Resource(ResourceAttributesMixin, object):
         resp = self._request("PUT", data=data, files=files, params=kwargs)
 
         if 200 <= resp.status_code <= 299:
-            return self._try_to_serialize_response(resp)
+            if resp.status_code == 204:
+                return True
+            else:
+                return self._try_to_serialize_response(resp)
         else:
             return False
 
