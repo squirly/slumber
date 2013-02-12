@@ -56,7 +56,7 @@ class Resource(ResourceAttributesMixin, object):
     def __init__(self, *args, **kwargs):
         self._store = kwargs
 
-    def __call__(self, id=None, format=None, url_override=None):
+    def __call__(self, id=None, url_override=None, **kwargs):
         """
         Returns a new instance of self modified by one or more of the available
         parameters. These allows us to do things like override format for a
@@ -65,28 +65,26 @@ class Resource(ResourceAttributesMixin, object):
         """
 
         # Short Circuit out if the call is empty
-        if id is None and format is None and url_override is None:
+        if id is None and not kwargs and url_override is None:
             return self
 
-        kwargs = {}
+        new_kwargs = {}
         for key, value in self._store.iteritems():
-            kwargs[key] = value
+            new_kwargs[key] = value
 
         if id is not None:
-            kwargs["base_url"] = url_join(self._store["base_url"], id)
+            new_kwargs["base_url"] = url_join(self._store["base_url"], id)
 
-        if format is not None:
-            kwargs["format"] = format
+        for key, value in kwargs.items():
+            new_kwargs[key] = value
 
         if url_override is not None:
             # @@@ This is hacky and we should probably figure out a better way
             #    of handling the case when a POST/PUT doesn't return an object
             #    but a Location to an object that we need to GET.
-            kwargs["base_url"] = url_override
+            new_kwargs["base_url"] = url_override
 
-        kwargs["session"] = self._store["session"]
-
-        return self.__class__(**kwargs)
+        return self.__class__(**new_kwargs)
 
     def _request(self, method, data=None, files=None, params=None):
         s = self._store["serializer"]
