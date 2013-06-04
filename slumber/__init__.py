@@ -120,6 +120,8 @@ class Resource(ResourceAttributesMixin, object):
 
     def _try_to_serialize_response(self, resp):
         s = self._store["serializer"]
+        if resp.status_code in [204, 205]:
+            return
 
         if resp.headers.get("content-type", None):
             content_type = resp.headers.get("content-type").split(";")[0].strip()
